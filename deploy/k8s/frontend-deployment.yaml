@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: f5-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: f5-frontend
+  template:
+    metadata:
+      labels:
+        app: f5-frontend
+    spec:
+      containers:
+      - name: f5-frontend
+        image: f5-frontend:latest
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"

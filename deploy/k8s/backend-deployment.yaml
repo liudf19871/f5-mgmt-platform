@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: f5-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: f5-backend
+  template:
+    metadata:
+      labels:
+        app: f5-backend
+    spec:
+      containers:
+      - name: f5-backend
+        image: f5-backend:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATABASE_URL
+          value: "mysql+pymysql://root:root@mysql:3306/f5_platform"
+        - name: CLICKHOUSE_URL
+          value: "http://clickhouse:8123"
+        - name: REDIS_URL
+          value: "redis://redis:6379/0"
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "512Mi"
+          limits:
+            cpu: "1"
+            memory: "1Gi"
