@@ -3,10 +3,10 @@ FROM node:20-alpine as build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm install --registry=https://registry.npmmirror.com
+RUN npm install --unsafe-perm --registry=https://registry.npmmirror.com
 
 COPY . .
-RUN npm run build
+RUN npx vue-tsc && npx vite build
 
 FROM nginx:alpine
 
