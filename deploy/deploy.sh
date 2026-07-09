@@ -97,8 +97,17 @@ MYSQL_ROOT_PASSWORD=$MYSQL_PASSWORD
 DATABASE_URL=mysql+pymysql://root:$MYSQL_PASSWORD@mysql:3306/f5_platform
 EOF
 
+info "检查是否有失败的构建缓存..."
+if $COMPOSE_CMD ps 2>/dev/null | grep -q "deploy-frontend\|deploy-backend"; then
+    info "检测到已有容器，尝试停止并清理..."
+    $COMPOSE_CMD down --remove-orphans 2>/dev/null || true
+fi
+
+info "清理失败的构建缓存..."
+docker builder prune -f 2>/dev/null || true
+
 info "启动服务..."
-$COMPOSE_CMD up -d
+$COMPOSE_CMD up -d --build
 
 info "等待服务启动..."
 sleep 30
