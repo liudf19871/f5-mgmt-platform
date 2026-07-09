@@ -88,13 +88,6 @@ if [ -z "$MYSQL_PASSWORD" ]; then
     warn "未输入，使用默认密码: root"
 fi
 
-read -p "请输入代理服务器地址（如 http://127.0.0.1:7897，不需要则直接回车）: " PROXY_URL
-if [ -z "$PROXY_URL" ]; then
-    info "未配置代理，将使用国内镜像源进行构建"
-else
-    info "使用代理: $PROXY_URL"
-fi
-
 info "生成 .env 文件..."
 cd $DEPLOY_DIR/deploy
 
@@ -102,8 +95,6 @@ cat > .env << EOF
 SECRET_KEY=$SECRET_KEY
 MYSQL_ROOT_PASSWORD=$MYSQL_PASSWORD
 DATABASE_URL=mysql+pymysql://root:$MYSQL_PASSWORD@mysql:3306/f5_platform
-HTTP_PROXY=$PROXY_URL
-HTTPS_PROXY=$PROXY_URL
 EOF
 
 info "启动服务..."

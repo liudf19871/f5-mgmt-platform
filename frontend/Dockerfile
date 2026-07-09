@@ -2,11 +2,6 @@ FROM node:20-alpine as build
 
 WORKDIR /app
 
-ARG HTTP_PROXY
-ARG HTTPS_PROXY
-ENV HTTP_PROXY=$HTTP_PROXY
-ENV HTTPS_PROXY=$HTTPS_PROXY
-
 COPY package.json package-lock.json ./
 RUN npm install --registry=https://registry.npmmirror.com
 
