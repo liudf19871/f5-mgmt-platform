@@ -17,6 +17,8 @@ class DeviceResponse(BaseModel):
     port: int
     version: str | None
     status: str
+    username: str | None
     created_at: datetime
+    updated_at: datetime | None
 
     model_config = {"from_attributes": True}

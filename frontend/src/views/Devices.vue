@@ -131,7 +131,7 @@
           </template>
         </el-dialog>
 
-        <el-dialog v-model="showDetailDialog" title="设备详情" width="600px">
+        <el-dialog v-model="showDetailDialog" title="设备详情" width="700px" class="detail-dialog">
           <div v-if="selectedDevice" class="device-detail">
             <div class="detail-header">
               <div class="detail-title">
@@ -141,30 +141,68 @@
                   <span class="device-type" :class="selectedDevice.type">{{ selectedDevice.type === 'bigip' ? 'BIG-IP' : 'DNS' }}</span>
                 </div>
               </div>
-              <span class="device-status-text" :class="selectedDevice.status">{{ getStatusLabel(selectedDevice.status) }}</span>
+              <span class="device-status-badge" :class="selectedDevice.status">{{ getStatusLabel(selectedDevice.status) }}</span>
             </div>
-            <div class="detail-section">
-              <h4>基本信息</h4>
-              <div class="detail-grid">
-                <div class="detail-item">
-                  <label>IP地址</label>
-                  <span>{{ selectedDevice.ip_address }}</span>
+
+            <el-tabs v-model="activeTab" class="detail-tabs">
+              <el-tab-pane label="基本信息" name="basic">
+                <div class="detail-section">
+                  <div class="detail-grid">
+                    <div class="detail-item">
+                      <label>设备ID</label>
+                      <span class="monospace">{{ selectedDevice.id }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <label>设备名称</label>
+                      <span>{{ selectedDevice.name }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <label>设备类型</label>
+                      <span>{{ selectedDevice.type === 'bigip' ? 'BIG-IP' : 'DNS' }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <label>状态</label>
+                      <span class="device-status-text" :class="selectedDevice.status">{{ getStatusLabel(selectedDevice.status) }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <label>IP地址</label>
+                      <span class="monospace">{{ selectedDevice.ip_address }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <label>端口</label>
+                      <span>{{ selectedDevice.port }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <label>版本</label>
+                      <span>{{ selectedDevice.version || '-' }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <label>用户名</label>
+                      <span>{{ selectedDevice.username || '-' }}</span>
+                    </div>
+                  </div>
                 </div>
-                <div class="detail-item">
-                  <label>端口</label>
-                  <span>{{ selectedDevice.port }}</span>
+              </el-tab-pane>
+              <el-tab-pane label="时间信息" name="timeline">
+                <div class="detail-section">
+                  <div class="detail-grid">
+                    <div class="detail-item">
+                      <label>创建时间</label>
+                      <span>{{ formatDateTime(selectedDevice.created_at) }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <label>更新时间</label>
+                      <span>{{ formatDateTime(selectedDevice.updated_at) || '-' }}</span>
+                    </div>
+                  </div>
                 </div>
-                <div class="detail-item">
-                  <label>版本</label>
-                  <span>{{ selectedDevice.version }}</span>
-                </div>
-                <div class="detail-item">
-                  <label>创建时间</label>
-                  <span>{{ selectedDevice.created_at }}</span>
-                </div>
-              </div>
-            </div>
+              </el-tab-pane>
+            </el-tabs>
           </div>
+          <template #footer>
+            <el-button @click="showDetailDialog = false">关闭</el-button>
+            <el-button type="primary" @click="handleEditFromDetail">编辑设备</el-button>
+          </template>
         </el-dialog>
       </div>
     </div>
@@ -190,6 +228,7 @@ const searchQuery = ref('')
 const currentPage = ref(1)
 const pageSize = ref(6)
 const total = ref(12)
+const activeTab = ref('basic')
 
 const form = reactive({
   id: 0,
@@ -209,6 +248,24 @@ const getStatusLabel = (status: string) => {
     unhealthy: '异常'
   }
   return labels[status] || status
+}
+
+const formatDateTime = (dateTime: string) => {
+  if (!dateTime) return '-'
+  const date = new Date(dateTime)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  })
+}
+
+const handleEditFromDetail = () => {
+  showDetailDialog.value = false
+  editDevice(selectedDevice.value)
 }
 
 const getRandomMetric = () => {
@@ -608,6 +665,77 @@ fetchDevices()
   font-size: var(--font-size-sm);
   color: var(--color-text-primary);
   font-weight: 500;
+}
+
+.detail-item span.monospace {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace;
+}
+
+.device-status-badge {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+}
+
+.device-status-badge.online,
+.device-status-badge.healthy {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.device-status-badge.offline,
+.device-status-badge.unhealthy {
+  background: var(--color-danger-light);
+  color: var(--color-danger);
+}
+
+.detail-dialog :deep(.el-dialog__header) {
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-lg);
+}
+
+.detail-dialog :deep(.el-dialog__title) {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.detail-dialog :deep(.el-dialog__body) {
+  padding: 0;
+}
+
+.detail-dialog :deep(.el-dialog__footer) {
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-lg);
+}
+
+.detail-tabs {
+  margin-top: var(--space-sm);
+}
+
+.detail-tabs :deep(.el-tabs__header) {
+  margin: 0;
+  padding: 0 var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.detail-tabs :deep(.el-tabs__nav-wrap) {
+  padding: var(--space-md) 0;
+}
+
+.detail-tabs :deep(.el-tabs__item) {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.detail-tabs :deep(.el-tabs__item.is-active) {
+  color: var(--color-primary);
+}
+
+.detail-tabs :deep(.el-tabs__content) {
+  padding: var(--space-lg);
 }
 
 @media (max-width: 768px) {
