@@ -15,8 +15,8 @@ def init_db():
     try:
         from app.models.users import User
         admin_user = db.query(User).filter(User.username == "admin").first()
+        hashed_password = get_password_hash("admin")
         if not admin_user:
-            hashed_password = get_password_hash("admin")
             admin_user = User(
                 username="admin",
                 email="admin@example.com",
@@ -28,7 +28,10 @@ def init_db():
             db.commit()
             print("Default admin user created successfully")
         else:
-            print("Admin user already exists")
+            admin_user.hashed_password = hashed_password
+            admin_user.status = "active"
+            db.commit()
+            print("Admin user password reset successfully")
     except Exception as e:
         print(f"Error creating admin user: {e}")
         db.rollback()
