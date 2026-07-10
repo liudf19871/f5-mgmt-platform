@@ -2,6 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api import auth, devices, clusters, monitor, config, logs, reports, batch, users, audit
+from app.core.init_db import init_db
+
+init_db()
 
 app = FastAPI(title=settings.APP_NAME, version=settings.APP_VERSION)
 
