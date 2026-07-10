@@ -79,16 +79,19 @@
               </div>
             </div>
             <div class="device-card-footer">
-              <span class="device-status-text" :class="device.status">{{ getStatusLabel(device.status) }}</span>
-              <div class="device-actions">
-                <button class="action-btn" @click.stop="editDevice(device)" title="编辑">
-                  <el-icon><Edit /></el-icon>
-                </button>
-                <button class="action-btn danger" @click.stop="deleteDevice(device.id)" title="删除">
-                  <el-icon><Delete /></el-icon>
-                </button>
-              </div>
-            </div>
+                  <span class="device-status-text" :class="device.status">{{ getStatusLabel(device.status) }}</span>
+                  <div class="device-actions">
+                    <button class="action-btn" @click.stop="handleTestConnection(device.id)" title="测试连接">
+                      <el-icon><Link /></el-icon>
+                    </button>
+                    <button class="action-btn" @click.stop="editDevice(device)" title="编辑">
+                      <el-icon><Edit /></el-icon>
+                    </button>
+                    <button class="action-btn danger" @click.stop="deleteDevice(device.id)" title="删除">
+                      <el-icon><Delete /></el-icon>
+                    </button>
+                  </div>
+                </div>
           </div>
         </div>
 
@@ -201,6 +204,8 @@
           </div>
           <template #footer>
             <el-button @click="showDetailDialog = false">关闭</el-button>
+            <el-button @click="handleTestConnection(selectedDevice.id)">测试连接</el-button>
+            <el-button type="primary" @click="handleSyncConfig(selectedDevice.id)">同步配置</el-button>
             <el-button type="primary" @click="handleEditFromDetail">编辑设备</el-button>
           </template>
         </el-dialog>
@@ -213,7 +218,8 @@
 import { ref, reactive } from 'vue'
 import Sidebar from '@/components/Sidebar.vue'
 import Header from '@/components/Header.vue'
-import { Plus, Monitor, Key, InfoFilled, Edit, Delete } from '@element-plus/icons-vue'
+import { Plus, Monitor, Key, InfoFilled, Edit, Delete, Link, Refresh } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { useDevicesStore } from '@/stores/devices'
 
 const devicesStore = useDevicesStore()
@@ -266,6 +272,35 @@ const formatDateTime = (dateTime: string) => {
 const handleEditFromDetail = () => {
   showDetailDialog.value = false
   editDevice(selectedDevice.value)
+}
+
+const handleTestConnection = async (deviceId: number) => {
+  try {
+    const result = await devicesStore.testConnection(deviceId)
+    if (result.success) {
+      await ElMessage.success(`连接成功！版本: ${result.version || ''}`)
+      await fetchDevices()
+    } else {
+      await ElMessage.error(`连接失败: ${result.message}`)
+    }
+  } catch (error) {
+    console.error(error)
+    await ElMessage.error('连接测试失败')
+  }
+}
+
+const handleSyncConfig = async (deviceId: number) => {
+  try {
+    const result = await devicesStore.syncDeviceConfig(deviceId)
+    if (result.success) {
+      await ElMessage.success(`配置同步成功！虚拟服务器: ${result.virtual_servers}, 池: ${result.pools}, 节点: ${result.nodes}, 证书: ${result.certificates}`)
+    } else {
+      await ElMessage.error(`同步失败: ${result.message}`)
+    }
+  } catch (error) {
+    console.error(error)
+    await ElMessage.error('配置同步失败')
+  }
 }
 
 const getRandomMetric = () => {

@@ -4,6 +4,7 @@ from sqlalchemy.future import select
 from app.core.database import get_db
 from app.models.device import Device
 from app.schemas.device import DeviceCreate, DeviceResponse
+from app.services.f5_manager import discover_device, sync_device_config, F5Manager
 
 router = APIRouter()
 
@@ -26,6 +27,41 @@ async def create_device(device: DeviceCreate, db: AsyncSession = Depends(get_db)
     await db.commit()
     await db.refresh(db_device)
     return db_device
+
+@router.post("/{device_id}/discover")
+async def discover_device_api(device_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Device).where(Device.id == device_id))
+    device = result.scalar_one_or_none()
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    
+    result = await discover_device(device)
+    if result["success"]:
+        if "version" in result:
+            device.version = result["version"]
+        device.status = "online"
+        await db.commit()
+    
+    return result
+
+@router.post("/{device_id}/sync")
+async def sync_device_config_api(device_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Device).where(Device.id == device_id))
+    device = result.scalar_one_or_none()
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    
+    return await sync_device_config(device)
+
+@router.post("/{device_id}/test-connection")
+async def test_connection_api(device_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Device).where(Device.id == device_id))
+    device = result.scalar_one_or_none()
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    
+    f5 = F5Manager(device)
+    return await f5.test_connection()
 
 @router.get("/{device_id}", response_model=DeviceResponse)
 async def get_device(device_id: int, db: AsyncSession = Depends(get_db)):
