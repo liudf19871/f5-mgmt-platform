@@ -5,7 +5,7 @@ from app.core.config import settings
 from app.models import users, device, cluster
 from app.core.security import get_password_hash
 
-engine = create_engine(settings.DATABASE_URL.replace("+pymysql", "+mysqlconnector"))
+engine = create_engine(settings.DATABASE_URL, echo=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def init_db():

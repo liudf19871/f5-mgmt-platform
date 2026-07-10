@@ -9,7 +9,7 @@ async_db_url = settings.DATABASE_URL.replace("mysql+pymysql", "mysql+aiomysql")
 engine = create_async_engine(async_db_url, echo=True)
 async_session_maker = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
-sync_engine = create_engine(settings.DATABASE_URL.replace("+pymysql", "+mysqlconnector"), echo=True)
+sync_engine = create_engine(settings.DATABASE_URL, echo=True)
 
 async def get_db():
     async with async_session_maker() as session:
