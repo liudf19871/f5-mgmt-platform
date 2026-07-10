@@ -61,17 +61,13 @@ if ! systemctl is-active --quiet docker; then
 fi
 success "Docker 服务运行正常"
 
-DEPLOY_DIR="/opt/f5-management-platform"
-info "创建部署目录..."
-mkdir -p $DEPLOY_DIR
+DEPLOY_DIR=$(dirname "$(readlink -f "$0")")/..
+DEPLOY_DIR=$(realpath "$DEPLOY_DIR")
+info "项目根目录: $DEPLOY_DIR"
 
-info "请确保已将项目文件上传到 $DEPLOY_DIR 目录"
-info "如果使用 git，请执行：git clone <repository-url> $DEPLOY_DIR"
-
-read -p "项目是否已上传到 $DEPLOY_DIR？(y/n): " CONFIRM
-if [ "$CONFIRM" != "y" ] && [ "$CONFIRM" != "Y" ]; then
-    info "请先上传项目文件，然后重新运行脚本"
-    exit 0
+if [ ! -f "$DEPLOY_DIR/deploy/docker-compose.yml" ]; then
+    error "未找到项目文件，请确保脚本在项目的 deploy 目录下运行"
+    exit 1
 fi
 
 info "配置环境变量..."
